@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>札幌・小樽 2泊3日 しおり</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DATA SOURCE — 店名や時刻が決まったらこの下の TRIP オブジェクトだけ
+   書き換えれば、しおり全体に反映されます。
+   status: "confirmed"(確定) / "tentative"(仮) / "candidates"(候補複数)
+   ============================================================ */
+</style>
+</head>
+<body>
+
+<script>
+const TRIP = {
+  title: "札幌・小樽 旅行のしおり",
+  dateRange: "2026年9月29日(火)〜10月1日(木) 2泊3日",
+  people: "彼女と2人旅",
+  flights: [
+    { no: "JAL2830", route: "いわて花巻 → 札幌(新千歳)", dep: "11:40", arr: "12:35", date: "9/29(火)" },
+    { no: "JAL2839", route: "札幌(新千歳) → いわて花巻", dep: "16:30", arr: "17:25", date: "10/1(木)" }
+  ],
+  hotel: { name: "ホテルビスタ札幌 [中島公園]", detail: "セミダブル(禁煙)・食事なし・9/29〜10/1 2連泊" },
+  days: [
+    {
+      label: "Day 1", date: "9/29(火)",
+      theme: "花巻 → 新千歳 → 札幌、オータムフェスト＆ディナー",
+      items: [
+        { time: "9:30", title: "盛岡駅 集合", note: "タリーズで買い出し", status: "confirmed" },
+        { time: "9:52", title: "盛岡駅 発", note: "新幹線", status: "confirmed" },
+        { time: "10:23", title: "花巻空港駅 着", status: "confirmed" },
+        { time: "10:40", title: "花巻空港 着", note: "GOタクシー利用", status: "confirmed" },
+        { time: "11:40", title: "花巻空港 発", note: "JAL2830", status: "confirmed" },
+        { time: "12:35", title: "新千歳空港 着", status: "confirmed" },
+        { time: "12:35-13:40", title: "空港グルメ＆買い出し", note: "2F: かま栄・北海道牛乳カステラ・佐藤水産 / 3F: 北海道ラーメン道場・よつ葉ホワイトコージ", status: "candidates",
+          options: ["かま栄(パンロール)", "北海道牛乳カステラ", "佐藤水産(鮭とば)", "北海道ラーメン道場(店は列の短い所へ)", "よつ葉ホワイトコージ(アイス)"] },
+        { time: "13:50", title: "快速エアポート 発", note: "新千歳空港駅", status: "confirmed",
+          transit: {
+            headline: "新千歳空港 → 札幌方面",
+            around: [
+              { time: "12:59", train: "エアポート79号", dest: "札幌行", arr: "13:37" },
+              { time: "13:09", train: "区間快速81号", dest: "札幌行", arr: "13:52" },
+              { time: "13:20", train: "エアポート83号", dest: "小樽行", arr: "13:57" },
+              { time: "13:50", train: "(この時刻を予定)", dest: "", arr: "", self: true },
+              { time: "13:59", train: "エアポート91号", dest: "札幌行", arr: "14:37" },
+              { time: "14:09", train: "区間快速93号", dest: "札幌行", arr: "14:52" }
+            ],
+            note: "新千歳空港発は概ね10分間隔で運行。所要時間は快速37分／特別快速33分。時刻は2026年8月時点の目安です。",
+            link: "https://www.jrhokkaido.co.jp/airport/"
+          } },
+        { time: "14:30頃", title: "札幌駅 着", status: "confirmed" },
+        { time: "14:45", title: "ホテルへチェックイン", note: "荷物を預ける", status: "confirmed" },
+        { time: "15:15-17:45", title: "さっぽろオータムフェスト", note: "大通公園・入場無料・予約不要", status: "confirmed" },
+        { time: "18:00", title: "BAR AMUSE でディナー", note: "イタリア料理・¥5,000〜9,000・予約済み", status: "confirmed", highlight: true },
+        { time: "23:00", title: "セイコーマートで買い出し", status: "confirmed" },
+        { time: "23:10", title: "ホテルで夜食", status: "confirmed" }
+      ]
+    },
+    {
+      label: "Day 2", date: "9/30(水)",
+      theme: "海鮮朝ごはん → 小樽食べ歩き → すすきのハシゴ酒",
+      items: [
+        { time: "8:00", title: "ホテル 出発", status: "confirmed" },
+        { time: "8:30-10:00", title: "丼兵衛 二条市場店", note: "海鮮丼・★4.4", status: "confirmed", highlight: true },
+        { time: "10:00-10:30", title: "札幌駅へ移動", status: "confirmed" },
+        { time: "10:30", title: "JR札幌駅 発", note: "快速エアポート", status: "confirmed",
+          transit: {
+            headline: "札幌 → 小樽方面",
+            around: [
+              { time: "10:00", train: "エアポート35号", dest: "小樽行", arr: "10:41" },
+              { time: "10:30", train: "特別快速エアポート41号", dest: "小樽行", arr: "11:05", self: true },
+              { time: "11:00", train: "エアポート(次発)", dest: "小樽行", arr: "11:41" }
+            ],
+            note: "日中は特別快速・快速あわせて毎時2〜3本。所要時間は特別快速で約35分。時刻は2026年8月時点の目安です。",
+            link: "https://www.jrhokkaido.co.jp/airport/"
+          } },
+        { time: "11:05頃", title: "JR南小樽駅 着", status: "confirmed" },
+        { time: "11:15-15:30", title: "小樽 食べ歩き・運河散策", note: "南小樽駅→堺町通り→小樽運河のルート", status: "candidates",
+          options: ["ルタオ本店(ドゥーブルフロマージュ)", "北菓楼 小樽本館(夢不思議)", "六花亭 小樽運河店", "かま栄 本社工場(できたてパンロール)", "小樽運河 散策"] },
+        { time: "15:30頃", title: "小樽散策 終了", note: "JR小樽駅へ", status: "confirmed" },
+        { time: "16:00頃", title: "JR小樽駅 発", status: "confirmed",
+          transit: {
+            headline: "小樽 → 札幌方面",
+            around: [
+              { time: "15:33", train: "エアポート136号", dest: "新千歳空港行(札幌経由)", arr: "16:08" },
+              { time: "16:00", train: "エアポート140号", dest: "新千歳空港行(札幌経由)", arr: "16:33", self: true },
+              { time: "16:11", train: "普通", dest: "岩見沢行", arr: "16:58" }
+            ],
+            note: "日中は毎時2〜3本。小樽→札幌の所要時間は快速で約33分。時刻は2026年8月時点の目安です。",
+            link: "https://www.jrhokkaido.co.jp/airport/"
+          } },
+        { time: "16:45頃", title: "JR札幌駅 着", status: "confirmed" },
+        { time: "16:45-17:30", title: "ププリエ", note: "すすきの駅上・洋菓子店・★4.0", status: "confirmed" },
+        { time: "17:30-21:00", title: "すすきの・狸小路 ハシゴ酒", note: "2〜3軒", status: "candidates",
+          options: ["狸COMICHI(狸小路5〜7丁目)", "すすきの周辺の居酒屋"] },
+        { time: "21:00-22:30", title: "夜パフェで締め", note: "札幌名物シメパフェ", status: "candidates",
+          options: ["パフェ専門店 ななまがり", "夜パフェ専門店 パフェテリア パル"] }
+      ]
+    },
+    {
+      label: "Day 3", date: "10/1(木)",
+      theme: "札幌散策 → 回転寿司トリトン → 空港でお土産 → 帰路",
+      items: [
+        { time: "8:30", title: "ホテルチェックアウト", note: "札幌駅のコインロッカーに荷物を預ける", status: "confirmed" },
+        { time: "8:45-9:30", title: "朝カフェ", note: "PAUL 札幌ステラプレイス店", status: "tentative" },
+        { time: "9:30-10:15", title: "札幌散策＆お土産下見", note: "赤れんが庁舎周辺／六花亭 札幌本店(雪こんチーズ)", status: "tentative" },
+        { time: "10:15-10:30", title: "タクシーでトリトンへ", note: "約5〜8分・800〜1,000円", status: "confirmed" },
+        { time: "10:30", title: "回転寿司トリトン 北8条光星店 到着", note: "開店30分前に並び開始", status: "confirmed" },
+        { time: "11:00-12:15", title: "トリトンでお寿司", status: "confirmed", highlight: true },
+        { time: "12:15-13:10", title: "徒歩で札幌駅へ", note: "荷物回収・駅周辺で買い物", status: "confirmed" },
+        { time: "13:24", title: "JR札幌駅 発", note: "特別快速エアポート", status: "confirmed" },
+        { time: "13:57", title: "新千歳空港 着", status: "confirmed" },
+        { time: "14:00-15:30", title: "空港でお土産・限定スイーツ", status: "tentative" },
+        { time: "15:30", title: "保安検査場 通過", status: "confirmed" },
+        { time: "16:10", title: "搭乗口へ", note: "搭乗開始", status: "confirmed" },
+        { time: "16:30", title: "離陸", note: "JAL2839", status: "confirmed", highlight: true }
+      ]
+    }
+  ]
+};
+</script>
+
+<main id="app"></main>
+
+<script>
+const STATUS_LABEL = { confirmed: "確定", tentative: "仮", candidates: "候補" };
+
+function render() {
+  const app = document.getElementById('app');
+  const header = `
+    <header class="hero">
+      <p class="hero-eyebrow">${TRIP.dateRange}・${TRIP.people}</p>
+      <h1>${TRIP.title}</h1>
+      <div class="hero-facts">
+        ${TRIP.flights.map(f => `
+          <div class="fact">
+            <span class="fact-label">${f.date} ${f.no}</span>
+            <span class="fact-value">${f.route}　${f.dep} → ${f.arr}</span>
+          </div>`).join('')}
+        <div class="fact">
+          <span class="fact-label">宿泊</span>
+          <span class="fact-value">${TRIP.hotel.name}</span>
+          <span class="fact-sub">${TRIP.hotel.detail}</span>
+        </div>
+      </div>
+    </header>`;
+
+  const nav = `
+    <nav class="daynav" id="daynav">
+      ${TRIP.days.map((d, i) => `<button class="daynav-btn${i===0?' active':''}" data-day="${i}">${d.label}<span>${d.date}</span></button>`).join('')}
+    </nav>`;
+
+  let uidCounter = 0;
+  const days = TRIP.days.map((day, i) => `
+    <section class="day${i===0?' active':''}" data-day="${i}">
+      <div class="day-heading">
+        <h2>${day.label} <span class="day-date">${day.date}</span></h2>
+        <p class="day-theme">${day.theme}</p>
+      </div>
+      <ol class="timeline">
+        ${day.items.map(item => renderItem(item, uidCounter++)).join('')}
+      </ol>
+    </section>`).join('');
+
+  app.innerHTML = header + nav + `<div class="days">${days}</div>`;
+
+  document.querySelectorAll('.daynav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = btn.dataset.day;
+      activateDay(idx);
+      history.replaceState(null, '', `#day${Number(idx) + 1}`);
+    });
+  });
+
+  document.querySelectorAll('.transit-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const panel = document.getElementById(btn.dataset.target);
+      const open = !panel.hidden;
+      panel.hidden = open;
+      btn.setAttribute('aria-expanded', String(!open));
+      btn.classList.toggle('is-open', !open);
+    });
+  });
+
+  const hashMatch = location.hash.match(/day(\d+)/);
+  if (hashMatch) {
+    const idx = String(Number(hashMatch[1]) - 1);
+    if (document.querySelector(`.daynav-btn[data-day="${idx}"]`)) activateDay(idx);
+  }
+}
+
+function activateDay(idx) {
+  document.querySelectorAll('.daynav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.day').forEach(d => d.classList.remove('active'));
+  document.querySelector(`.daynav-btn[data-day="${idx}"]`).classList.add('active');
+  document.querySelector(`.day[data-day="${idx}"]`).classList.add('active');
+}
+
+function renderItem(item, uid) {
+  const badge = `<span class="badge badge-${item.status}">${STATUS_LABEL[item.status]}</span>`;
+  const note = item.note ? `<p class="item-note">${item.note}</p>` : '';
+  const options = item.options ? `<ul class="options">${item.options.map(o => `<li>${o}</li>`).join('')}</ul>` : '';
+  const panelId = `transit-${uid}`;
+  const transitToggle = item.transit ? `<button type="button" class="transit-toggle" data-target="${panelId}" aria-expanded="false">時刻表を見る <span class="chev">▾</span></button>` : '';
+  const transitPanel = item.transit ? renderTransitPanel(item.transit, panelId) : '';
+  return `
+    <li class="item${item.highlight ? ' highlight' : ''}">
+      <div class="item-time">${item.time}</div>
+      <div class="item-dot"></div>
+      <div class="item-body">
+        <div class="item-title-row">
+          <h3>${item.title}</h3>
+          ${badge}
+        </div>
+        ${note}
+        ${options}
+        ${transitToggle}
+        ${transitPanel}
+      </div>
+    </li>`;
+}
+
+function renderTransitPanel(transit, panelId) {
+  const rows = (transit.around || []).map(r => `
+    <div class="transit-row${r.self ? ' self' : ''}">
+      <span class="transit-row-time">${r.time}</span>
+      <span class="transit-row-train">${r.train}${r.dest ? '　' + r.dest : ''}</span>
+      ${r.arr ? `<span class="transit-row-arr">${r.arr}着</span>` : ''}
+    </div>`).join('');
+  return `
+    <div class="transit-panel" id="${panelId}" hidden>
+      <p class="transit-headline">${transit.headline}</p>
+      ${rows ? `<div class="transit-rows">${rows}</div>` : ''}
+      <p class="transit-note">${transit.note}</p>
+      ${transit.link ? `<a class="transit-link" href="${transit.link}" target="_blank" rel="noopener">公式サイトで最新の時刻を確認する →</a>` : ''}
+    </div>`;
+}
+
+render();
+</script>
+
+<style>
+:root {
+  --ink: #22262E;
+  --ink-soft: #565C66;
+  --paper: #FAF8F3;
+  --panel: #FFFFFF;
+  --navy: #1F3350;
+  --navy-deep: #142338;
+  --amber: #C6852F;
+  --amber-soft: #F3E3C8;
+  --teal: #2E6B63;
+  --teal-soft: #DCEAE7;
+  --line: #E2DDD1;
+  --radius: 10px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Zen Kaku Gothic New", sans-serif;
+  line-height: 1.7;
+}
+h1, h2, h3 {
+  font-family: "Shippori Mincho", serif;
+  font-weight: 700;
+  margin: 0;
+  color: var(--navy-deep);
+}
+.hero {
+  background: var(--navy-deep);
+  color: #F2EFE6;
+  padding: 40px 24px 32px;
+}
+.hero-eyebrow {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #C9B98C;
+  letter-spacing: 0.02em;
+}
+.hero h1 {
+  color: #FAF8F3;
+  font-size: 28px;
+  line-height: 1.4;
+  margin-bottom: 20px;
+}
+.hero-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  padding-top: 18px;
+}
+.fact { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 14px; }
+.fact-label { color: var(--amber); font-weight: 500; min-width: 96px; }
+.fact-value { color: #EDE9DC; }
+.fact-sub { color: #B9B3A2; font-size: 12px; width: 100%; margin-left: 106px; }
+
+.daynav {
+  display: flex;
+  position: sticky;
+  top: 0;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  z-index: 10;
+}
+.daynav-btn {
+  flex: 1;
+  border: none;
+  background: none;
+  font-family: "Zen Kaku Gothic New", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  padding: 14px 8px 12px;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.daynav-btn span { font-size: 11px; color: var(--ink-soft); font-weight: 400; }
+.daynav-btn.active { color: var(--navy-deep); border-bottom-color: var(--amber); }
+
+.days { max-width: 640px; margin: 0 auto; padding: 8px 20px 60px; }
+.day { display: none; }
+.day.active { display: block; }
+.day-heading { padding: 24px 0 8px; }
+.day-heading h2 { font-size: 22px; }
+.day-date { font-size: 15px; color: var(--ink-soft); font-weight: 400; margin-left: 6px; }
+.day-theme { color: var(--ink-soft); font-size: 14px; margin: 6px 0 0; }
+
+.timeline { list-style: none; margin: 20px 0 0; padding: 0; position: relative; }
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 74px;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: var(--line);
+}
+.item {
+  display: grid;
+  grid-template-columns: 62px 16px 1fr;
+  column-gap: 4px;
+  padding-bottom: 22px;
+  position: relative;
+}
+.item-time { font-size: 13px; color: var(--ink-soft); padding-top: 2px; text-align: right; white-space: nowrap; }
+.item-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--navy);
+  margin-top: 6px;
+  justify-self: center;
+  position: relative;
+  z-index: 1;
+}
+.item.highlight .item-dot { background: var(--amber); width: 11px; height: 11px; margin-top: 5px; }
+.item-body { padding-left: 6px; }
+.item-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.item-title-row h3 { font-size: 16px; }
+.item.highlight .item-title-row h3 { color: var(--amber); }
+.item-note { margin: 4px 0 0; font-size: 13px; color: var(--ink-soft); }
+
+.badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.badge-confirmed { background: var(--navy); color: #F2EFE6; }
+.badge-tentative { background: var(--amber-soft); color: var(--amber); border: 1px solid var(--amber); }
+.badge-candidates { background: var(--teal-soft); color: var(--teal); border: 1px solid var(--teal); }
+
+.options {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  list-style: none;
+  font-size: 13px;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.options li { padding-left: 14px; position: relative; }
+.options li::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 8px;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--teal);
+}
+
+.transit-toggle {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--navy);
+  font-family: "Zen Kaku Gothic New", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.transit-toggle .chev { font-size: 10px; transition: transform 0.15s ease; }
+.transit-toggle.is-open .chev { transform: rotate(180deg); }
+.transit-panel {
+  margin-top: 10px;
+  padding: 14px 14px 12px;
+  background: var(--navy-deep);
+  border-radius: var(--radius);
+  color: #EDE9DC;
+}
+.transit-headline { margin: 0 0 8px; font-size: 13px; font-weight: 500; color: var(--amber); }
+.transit-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.transit-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+.transit-row.self { background: rgba(198,133,47,0.22); }
+.transit-row-time { font-weight: 500; min-width: 42px; }
+.transit-row-train { flex: 1; color: #D9D4C4; }
+.transit-row-arr { color: #B9B3A2; font-size: 12px; white-space: nowrap; }
+.transit-note { margin: 0 0 8px; font-size: 12px; color: #B9B3A2; line-height: 1.6; }
+.transit-link { color: var(--amber); font-size: 13px; font-weight: 500; text-decoration: none; }
+.transit-link:hover { text-decoration: underline; }
+
+@media print {
+  .transit-toggle { display: none; }
+  .transit-panel { display: block !important; background: #F4F0E4 !important; color: var(--ink) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .transit-headline { color: var(--amber) !important; }
+  .transit-row-train { color: var(--ink) !important; }
+  .transit-row-arr { color: var(--ink-soft) !important; }
+  .transit-note { color: var(--ink-soft) !important; }
+
+  .daynav { display: none; }
+  .day { display: block !important; page-break-before: always; }
+  .day:first-of-type { page-break-before: avoid; }
+  body { background: #fff; }
+  .hero { background: var(--navy-deep) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+@media (min-width: 700px) {
+  .hero { padding: 56px 40px 40px; }
+  .hero h1 { font-size: 34px; }
+  .days { padding-top: 12px; }
+}
+</style>
+</body>
+</html>
