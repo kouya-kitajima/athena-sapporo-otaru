@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>札幌・小樽 2泊3日 しおり</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<main id="app"><p class="loading">読み込み中…</p></main>
+
+<script>
+/* ============================================================
+   DATA SOURCE — 旅程データは同じフォルダの trip_data.json に
+   まとめてあります。店名・時刻が決まったらそちらだけ編集すれば、
+   このページにも印刷用PDFにも反映されます（build_print_pdf.py が
+   同じファイルを読み込みます）。
+   status: "confirmed"(確定) / "tentative"(仮) / "candidates"(候補複数)
+   ============================================================ */
+
+const STATUS_LABEL = { confirmed: "確定", tentative: "仮", candidates: "候補" };
+const STATE_KEY = 'athena-sapporo-otaru-state-v1';
+
+let TRIP = null;
+let STATE = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { /* ignore corrupt state */ }
+  return { checks: {}, expenses: {} };
+}
+
+function saveState() {
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(STATE)); } catch (e) { /* storage unavailable */ }
+}
+
+function mapUrl(query) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+function loadTripData(url, onSuccess, onError) {
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200 || xhr.status === 0) {
+          let parsed;
+          try { parsed = JSON.parse(xhr.responseText); }
+          catch (e) { onError(e); return; }
+          onSuccess(parsed);
+        } else {
+          onError(new Error('HTTP ' + xhr.status));
+        }
+      }
+    };
+    xhr.send();
+  } catch (e) {
+    onError(e);
+  }
+}
+
+loadTripData('./trip_data.json',
+  data => { TRIP = data; render(); },
+  err => {
+    console.error(err);
+    document.getElementById('app').innerHTML =
+      '<p class="loading">データの読み込みに失敗しました。ページを再読み込みしてください。<br>' +
+      '(trip_data.json が同じフォルダに必要です)</p>';
+  });
+
+function render() {
+  const app = document.getElementById('app');
+  const header = `
+    <header class="hero">
+      <p class="hero-eyebrow">${TRIP.dateRange}・${TRIP.people}</p>
+      <h1>${TRIP.title}</h1>
+      <div class="hero-facts">
+        ${TRIP.flights.map(f => `
+          <div class="fact">
+            <span class="fact-label">${f.date} ${f.no}</span>
+            <span class="fact-value">${f.route}　${f.dep} → ${f.arr}</span>
+          </div>`).join('')}
+        <div class="fact">
+          <span class="fact-label">宿泊</span>
+          <span class="fact-value">${TRIP.hotel.name}</span>
+          <span class="fact-sub">${TRIP.hotel.detail}</span>
+        </div>
+        ${TRIP.weather ? `
+        <div class="fact">
+          <span class="fact-label">天気の目安</span>
+          <span class="fact-value">${TRIP.weather}</span>
+        </div>` : ''}
+      </div>
+      <div class="hero-total">
+        <span>ここまでの実績合計</span>
+        <strong id="grand-total">¥0</strong>
+      </div>
+    </header>`;
+
+  const nav = `
+    <nav class="daynav" id="daynav">
+      ${TRIP.days.map((d, i) => `<button class="daynav-btn${i===0?' active':''}" data-day="${i}">${d.label}<span>${d.date}</span></button>`).join('')}
+    </nav>`;
+
+  let uidCounter = 0;
+  const days = TRIP.days.map((day, di) => `
+    <section class="day${di===0?' active':''}" data-day="${di}">
+      <div class="day-heading">
+        <h2>${day.label} <span class="day-date">${day.date}</span></h2>
+        <p class="day-theme">${day.theme}</p>
+        <p class="day-total">この日の実績: <strong id="day-total-${di}">¥0</strong></p>
+      </div>
+      <ol class="timeline">
+        ${day.items.map((item, ii) => renderItem(item, uidCounter++, di, ii)).join('')}
+      </ol>
+    </section>`).join('');
+
+  app.innerHTML = header + nav + `<div class="days">${days}</div>`;
+  attachHandlers();
+  updateTotals();
+
+  const hashMatch = location.hash.match(/day(\d+)/);
+  if (hashMatch) {
+    const idx = String(Number(hashMatch[1]) - 1);
+    if (document.querySelector(`.daynav-btn[data-day="${idx}"]`)) activateDay(idx);
+  }
+}
+
+function renderItem(item, uid, dayIndex, itemIndex) {
+  const id = `d${dayIndex}-i${itemIndex}`;
+  const checked = !!STATE.checks[id];
+  const expenseVal = STATE.expenses[id] || '';
+  const badge = item.status !== 'confirmed' ? `<span class="badge badge-${item.status}">${STATUS_LABEL[item.status]}</span>` : '';
+  const note = item.note ? `<p class="item-note">${item.note}</p>` : '';
+  const mapLink = item.map ? `<a class="map-link" href="${mapUrl(item.map)}" target="_blank" rel="noopener">📍 地図</a>` : '';
+  const options = item.options ? `<ul class="options">${item.options.map(o => `
+      <li><span>${o.name}</span>${o.map ? `<a class="map-link" href="${mapUrl(o.map)}" target="_blank" rel="noopener">📍 地図</a>` : ''}</li>`).join('')}</ul>` : '';
+  const panelId = `transit-${uid}`;
+  const transitToggle = item.transit ? `<button type="button" class="transit-toggle" data-target="${panelId}" aria-expanded="false">時刻表を見る <span class="chev">▾</span></button>` : '';
+  const transitPanel = item.transit ? renderTransitPanel(item.transit, panelId) : '';
+  return `
+    <li class="item${item.highlight ? ' highlight' : ''}${checked ? ' done' : ''}" data-id="${id}">
+      <div class="item-time">${item.time}</div>
+      <div class="item-dot"></div>
+      <div class="item-body">
+        <div class="item-title-row">
+          <label class="check-wrap">
+            <input type="checkbox" class="check" data-id="${id}" ${checked ? 'checked' : ''}>
+          </label>
+          <h3>${item.title}</h3>
+          ${mapLink}
+          ${badge}
+        </div>
+        ${note}
+        ${options}
+        ${transitToggle}
+        ${transitPanel}
+        <div class="expense-row">
+          <span class="expense-label">実際の出費</span>
+          <span class="expense-yen">¥</span>
+          <input type="number" inputmode="numeric" class="expense-input" data-id="${id}" placeholder="0" min="0" step="100" value="${expenseVal}">
+        </div>
+      </div>
+    </li>`;
+}
+
+function renderTransitPanel(transit, panelId) {
+  const rows = (transit.around || []).map(r => `
+    <div class="transit-row${r.self ? ' self' : ''}">
+      <span class="transit-row-time">${r.time}</span>
+      <span class="transit-row-train">${r.train}${r.dest ? '　' + r.dest : ''}</span>
+      ${r.arr ? `<span class="transit-row-arr">${r.arr}着</span>` : ''}
+    </div>`).join('');
+  return `
+    <div class="transit-panel" id="${panelId}" hidden>
+      <p class="transit-headline">${transit.headline}</p>
+      ${rows ? `<div class="transit-rows">${rows}</div>` : ''}
+      <p class="transit-note">${transit.note}</p>
+      ${transit.link ? `<a class="transit-link" href="${transit.link}" target="_blank" rel="noopener">公式サイトで最新の時刻を確認する →</a>` : ''}
+    </div>`;
+}
+
+function attachHandlers() {
+  document.querySelectorAll('.daynav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = btn.dataset.day;
+      activateDay(idx);
+      try { history.replaceState(null, '', `#day${Number(idx) + 1}`); } catch (e) { /* sandboxed preview */ }
+    });
+  });
+
+  document.querySelectorAll('.transit-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const panel = document.getElementById(btn.dataset.target);
+      const open = !panel.hidden;
+      panel.hidden = open;
+      btn.setAttribute('aria-expanded', String(!open));
+      btn.classList.toggle('is-open', !open);
+    });
+  });
+
+  document.querySelectorAll('.check').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const id = cb.dataset.id;
+      STATE.checks[id] = cb.checked;
+      saveState();
+      cb.closest('.item').classList.toggle('done', cb.checked);
+    });
+  });
+
+  document.querySelectorAll('.expense-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const id = inp.dataset.id;
+      const val = inp.value === '' ? null : Number(inp.value);
+      if (val === null || isNaN(val)) { delete STATE.expenses[id]; }
+      else { STATE.expenses[id] = val; }
+      saveState();
+      updateTotals();
+    });
+  });
+}
+
+function activateDay(idx) {
+  document.querySelectorAll('.daynav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.day').forEach(d => d.classList.remove('active'));
+  document.querySelector(`.daynav-btn[data-day="${idx}"]`).classList.add('active');
+  document.querySelector(`.day[data-day="${idx}"]`).classList.add('active');
+}
+
+function updateTotals() {
+  let grand = 0;
+  TRIP.days.forEach((day, di) => {
+    let dayTotal = 0;
+    day.items.forEach((item, ii) => {
+      const id = `d${di}-i${ii}`;
+      const v = STATE.expenses[id];
+      if (typeof v === 'number' && !isNaN(v)) dayTotal += v;
+    });
+    grand += dayTotal;
+    const el = document.getElementById(`day-total-${di}`);
+    if (el) el.textContent = `¥${dayTotal.toLocaleString()}`;
+  });
+  const grandEl = document.getElementById('grand-total');
+  if (grandEl) grandEl.textContent = `¥${grand.toLocaleString()}`;
+}
+</script>
+
+<style>
+:root {
+  --ink: #22262E;
+  --ink-soft: #565C66;
+  --paper: #FAF8F3;
+  --panel: #FFFFFF;
+  --navy: #1F3350;
+  --navy-deep: #142338;
+  --amber: #C6852F;
+  --amber-soft: #F3E3C8;
+  --teal: #2E6B63;
+  --teal-soft: #DCEAE7;
+  --line: #E2DDD1;
+  --radius: 10px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Zen Kaku Gothic New", sans-serif;
+  line-height: 1.7;
+}
+.loading { padding: 40px 24px; color: var(--ink-soft); font-size: 14px; }
+h1, h2, h3 {
+  font-family: "Shippori Mincho", serif;
+  font-weight: 700;
+  margin: 0;
+  color: var(--navy-deep);
+}
+.hero {
+  background: var(--navy-deep);
+  color: #F2EFE6;
+  padding: 40px 24px 32px;
+}
+.hero-eyebrow {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #C9B98C;
+  letter-spacing: 0.02em;
+}
+.hero h1 {
+  color: #FAF8F3;
+  font-size: 28px;
+  line-height: 1.4;
+  margin-bottom: 20px;
+}
+.hero-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  padding-top: 18px;
+}
+.fact { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 14px; }
+.fact-label { color: var(--amber); font-weight: 500; min-width: 96px; }
+.fact-value { color: #EDE9DC; }
+.fact-sub { color: #B9B3A2; font-size: 12px; width: 100%; margin-left: 106px; }
+.hero-total {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  color: #C9B98C;
+}
+.hero-total strong { color: #FAF8F3; font-size: 18px; font-family: "Shippori Mincho", serif; }
+
+.daynav {
+  display: flex;
+  position: sticky;
+  top: 0;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  z-index: 10;
+}
+.daynav-btn {
+  flex: 1;
+  border: none;
+  background: none;
+  font-family: "Zen Kaku Gothic New", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  padding: 14px 8px 12px;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.daynav-btn span { font-size: 11px; color: var(--ink-soft); font-weight: 400; }
+.daynav-btn.active { color: var(--navy-deep); border-bottom-color: var(--amber); }
+
+.days { max-width: 640px; margin: 0 auto; padding: 8px 20px 60px; }
+.day { display: none; }
+.day.active { display: block; }
+.day-heading { padding: 24px 0 8px; }
+.day-heading h2 { font-size: 22px; }
+.day-date { font-size: 15px; color: var(--ink-soft); font-weight: 400; margin-left: 6px; }
+.day-theme { color: var(--ink-soft); font-size: 14px; margin: 6px 0 0; }
+.day-total { font-size: 12px; color: var(--ink-soft); margin: 6px 0 0; }
+.day-total strong { color: var(--navy); }
+
+.timeline { list-style: none; margin: 20px 0 0; padding: 0; position: relative; }
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 74px;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: var(--line);
+}
+.item {
+  display: grid;
+  grid-template-columns: 62px 16px 1fr;
+  column-gap: 4px;
+  padding-bottom: 22px;
+  position: relative;
+}
+.item.done { opacity: 0.5; }
+.item.done .item-title-row h3 { text-decoration: line-through; }
+.item-time { font-size: 13px; color: var(--ink-soft); padding-top: 2px; text-align: right; white-space: nowrap; }
+.item-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--navy);
+  margin-top: 6px;
+  justify-self: center;
+  position: relative;
+  z-index: 1;
+}
+.item.highlight .item-dot { background: var(--navy); width: 11px; height: 11px; margin-top: 5px; }
+.item-body { padding-left: 6px; }
+.item-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.item-title-row h3 { font-size: 16px; }
+.item.highlight .item-title-row h3 { color: var(--navy); }
+.item-note { margin: 4px 0 0; font-size: 13px; color: var(--ink-soft); }
+
+.check-wrap { display: inline-flex; align-items: center; }
+.check { width: 17px; height: 17px; accent-color: var(--navy); cursor: pointer; }
+
+.map-link {
+  font-size: 12px;
+  color: var(--teal);
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.map-link:hover { text-decoration: underline; }
+
+.badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.badge-tentative { background: var(--amber-soft); color: var(--amber); border: 1px solid var(--amber); }
+.badge-candidates { background: var(--teal-soft); color: var(--teal); border: 1px solid var(--teal); }
+
+.options {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  list-style: none;
+  font-size: 13px;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.options li { padding-left: 14px; position: relative; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.options li::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 8px;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--teal);
+}
+
+.transit-toggle {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--navy);
+  font-family: "Zen Kaku Gothic New", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.transit-toggle .chev { font-size: 10px; transition: transform 0.15s ease; }
+.transit-toggle.is-open .chev { transform: rotate(180deg); }
+.transit-panel {
+  margin-top: 10px;
+  padding: 14px 14px 12px;
+  background: var(--navy-deep);
+  border-radius: var(--radius);
+  color: #EDE9DC;
+}
+.transit-headline { margin: 0 0 8px; font-size: 13px; font-weight: 500; color: var(--amber); }
+.transit-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.transit-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+.transit-row.self { background: rgba(198,133,47,0.22); }
+.transit-row-time { font-weight: 500; min-width: 42px; }
+.transit-row-train { flex: 1; color: #D9D4C4; }
+.transit-row-arr { color: #B9B3A2; font-size: 12px; white-space: nowrap; }
+.transit-note { margin: 0 0 8px; font-size: 12px; color: #B9B3A2; line-height: 1.6; }
+.transit-link { color: var(--amber); font-size: 13px; font-weight: 500; text-decoration: none; }
+.transit-link:hover { text-decoration: underline; }
+
+.expense-row {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 4px 10px;
+}
+.expense-label { font-size: 11px; color: var(--ink-soft); margin-right: 4px; }
+.expense-yen { font-size: 13px; color: var(--ink-soft); }
+.expense-input {
+  width: 70px;
+  border: none;
+  background: none;
+  font-family: "Zen Kaku Gothic New", sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+}
+
+@media print {
+  .transit-toggle { display: none; }
+  .transit-panel { display: block !important; background: #F4F0E4 !important; color: var(--ink) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .transit-headline { color: var(--amber) !important; }
+  .transit-row-train { color: var(--ink) !important; }
+  .transit-row-arr { color: var(--ink-soft) !important; }
+  .transit-note { color: var(--ink-soft) !important; }
+  .check-wrap, .expense-row, .map-link { display: none; }
+
+  .daynav { display: none; }
+  .day { display: block !important; page-break-before: always; }
+  .day:first-of-type { page-break-before: avoid; }
+  body { background: #fff; }
+  .hero { background: var(--navy-deep) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+@media (min-width: 700px) {
+  .hero { padding: 56px 40px 40px; }
+  .hero h1 { font-size: 34px; }
+  .days { padding-top: 12px; }
+}
+</style>
+</body>
+</html>
