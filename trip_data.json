@@ -1,0 +1,524 @@
+{
+  "title": "札幌・小樽 旅行のしおり",
+  "dateRange": "2026年9月29日(火)〜10月1日(木) 2泊3日",
+  "people": "彼女と2人旅",
+  "weather": "9月下旬の目安：日中18〜20℃／朝晩10〜13℃。雨具と羽織もの(カーディガン等)があると安心です。",
+  "flights": [
+    {
+      "no": "JAL2830",
+      "route": "いわて花巻 → 札幌(新千歳)",
+      "dep": "11:40",
+      "arr": "12:35",
+      "date": "9/29(火)"
+    },
+    {
+      "no": "JAL2839",
+      "route": "札幌(新千歳) → いわて花巻",
+      "dep": "16:30",
+      "arr": "17:25",
+      "date": "10/1(木)"
+    }
+  ],
+  "hotel": {
+    "name": "ホテルビスタ札幌 [中島公園]",
+    "detail": "セミダブル(禁煙)・食事なし・9/29〜10/1 2連泊"
+  },
+  "days": [
+    {
+      "label": "Day 1",
+      "date": "9/29(火)",
+      "theme": "花巻 → 新千歳 → 札幌、オータムフェスト＆ディナー",
+      "items": [
+        {
+          "time": "9:30",
+          "title": "盛岡駅 集合",
+          "note": "タリーズで買い出し",
+          "status": "confirmed"
+        },
+        {
+          "time": "9:52",
+          "title": "盛岡駅 発",
+          "note": "新幹線",
+          "status": "confirmed"
+        },
+        {
+          "time": "10:23",
+          "title": "花巻空港駅 着",
+          "status": "confirmed"
+        },
+        {
+          "time": "10:40",
+          "title": "花巻空港 着",
+          "note": "GOタクシー利用",
+          "status": "confirmed",
+          "tags": [
+            "transport"
+          ]
+        },
+        {
+          "time": "11:00頃",
+          "title": "保安検査場 通過",
+          "status": "confirmed"
+        },
+        {
+          "time": "11:20頃",
+          "title": "搭乗口へ",
+          "note": "搭乗開始",
+          "status": "confirmed"
+        },
+        {
+          "time": "11:40",
+          "title": "花巻空港 発",
+          "note": "JAL2830",
+          "status": "confirmed"
+        },
+        {
+          "time": "12:35",
+          "title": "新千歳空港 着",
+          "status": "confirmed"
+        },
+        {
+          "time": "12:35-13:40",
+          "title": "空港グルメ＆買い出し",
+          "note": "2F: かま栄・北海道牛乳カステラ・佐藤水産 / 3F: 北海道ラーメン道場・よつ葉ホワイトコージ",
+          "status": "candidates",
+          "options": [
+            {
+              "name": "かま栄(パンロール)",
+              "map": "かま栄 新千歳空港店"
+            },
+            {
+              "name": "北海道牛乳カステラ",
+              "map": "北海道牛乳カステラ 新千歳空港"
+            },
+            {
+              "name": "佐藤水産(鮭とば)",
+              "map": "佐藤水産 新千歳空港"
+            },
+            {
+              "name": "北海道ラーメン道場(店は列の短い所へ)",
+              "map": "新千歳空港 ラーメン道場"
+            },
+            {
+              "name": "よつ葉ホワイトコージ(アイス)",
+              "map": "ミルク&パフェ よつ葉ホワイトコージ 新千歳空港店"
+            }
+          ],
+          "tags": [
+            "gourmet"
+          ]
+        },
+        {
+          "time": "13:50",
+          "title": "快速エアポート 発",
+          "note": "新千歳空港駅",
+          "status": "confirmed",
+          "transit": {
+            "headline": "新千歳空港 → 札幌方面",
+            "around": [
+              {
+                "time": "12:59",
+                "train": "エアポート79号",
+                "dest": "札幌行",
+                "arr": "13:37"
+              },
+              {
+                "time": "13:09",
+                "train": "区間快速81号",
+                "dest": "札幌行",
+                "arr": "13:52"
+              },
+              {
+                "time": "13:20",
+                "train": "エアポート83号",
+                "dest": "小樽行",
+                "arr": "13:57"
+              },
+              {
+                "time": "13:50",
+                "train": "(この時刻を予定)",
+                "dest": "",
+                "arr": "",
+                "self": true
+              },
+              {
+                "time": "13:59",
+                "train": "エアポート91号",
+                "dest": "札幌行",
+                "arr": "14:37"
+              },
+              {
+                "time": "14:09",
+                "train": "区間快速93号",
+                "dest": "札幌行",
+                "arr": "14:52"
+              }
+            ],
+            "note": "新千歳空港発は概ね10分間隔で運行。所要時間は快速37分／特別快速33分。時刻は2026年8月時点の目安です。",
+            "link": "https://www.jrhokkaido.co.jp/airport/"
+          },
+          "tags": [
+            "transport"
+          ]
+        },
+        {
+          "time": "14:30頃",
+          "title": "札幌駅 着",
+          "status": "confirmed"
+        },
+        {
+          "time": "14:45",
+          "title": "ホテルへチェックイン",
+          "note": "荷物を預ける",
+          "status": "confirmed"
+        },
+        {
+          "time": "15:15-17:45",
+          "title": "さっぽろオータムフェスト",
+          "note": "大通公園・入場無料・予約不要",
+          "status": "confirmed",
+          "map": "大通公園 札幌",
+          "tags": [
+            "gourmet"
+          ]
+        },
+        {
+          "time": "18:00",
+          "title": "BAR AMUSE でディナー",
+          "note": "イタリア料理・¥5,000〜9,000・予約済み",
+          "status": "confirmed",
+          "highlight": true,
+          "map": "BAR AMUSE 札幌",
+          "tags": [
+            "gourmet"
+          ]
+        },
+        {
+          "time": "23:00",
+          "title": "セイコーマートで買い出し",
+          "status": "confirmed",
+          "tags": [
+            "gourmet"
+          ]
+        },
+        {
+          "time": "23:10",
+          "title": "ホテルで夜食",
+          "status": "confirmed"
+        }
+      ]
+    },
+    {
+      "label": "Day 2",
+      "date": "9/30(水)",
+      "theme": "海鮮朝ごはん → 小樽食べ歩き → すすきのハシゴ酒",
+      "items": [
+        {
+          "time": "8:00",
+          "title": "ホテル 出発",
+          "status": "confirmed"
+        },
+        {
+          "time": "8:30-10:00",
+          "title": "丼兵衛 二条市場店",
+          "note": "海鮮丼・★4.4",
+          "status": "confirmed",
+          "highlight": true,
+          "map": "丼兵衛 二条市場店",
+          "tags": [
+            "gourmet"
+          ]
+        },
+        {
+          "time": "10:00-10:30",
+          "title": "札幌駅へ移動",
+          "status": "confirmed",
+          "tags": [
+            "transport"
+          ]
+        },
+        {
+          "time": "10:30",
+          "title": "JR札幌駅 発",
+          "note": "快速エアポート",
+          "status": "confirmed",
+          "transit": {
+            "headline": "札幌 → 小樽方面",
+            "around": [
+              {
+                "time": "10:00",
+                "train": "エアポート35号",
+                "dest": "小樽行",
+                "arr": "10:41"
+              },
+              {
+                "time": "10:30",
+                "train": "特別快速エアポート41号",
+                "dest": "小樽行",
+                "arr": "11:05",
+                "self": true
+              },
+              {
+                "time": "11:00",
+                "train": "エアポート(次発)",
+                "dest": "小樽行",
+                "arr": "11:41"
+              }
+            ],
+            "note": "日中は特別快速・快速あわせて毎時2〜3本。所要時間は特別快速で約35分。時刻は2026年8月時点の目安です。",
+            "link": "https://www.jrhokkaido.co.jp/airport/"
+          },
+          "tags": [
+            "transport"
+          ]
+        },
+        {
+          "time": "11:05頃",
+          "title": "JR南小樽駅 着",
+          "status": "confirmed"
+        },
+        {
+          "time": "11:15-15:30",
+          "title": "小樽 食べ歩き・運河散策",
+          "note": "南小樽駅→堺町通り→小樽運河のルート",
+          "status": "candidates",
+          "options": [
+            {
+              "name": "ルタオ本店(ドゥーブルフロマージュ)",
+              "map": "ルタオ本店 小樽"
+            },
+            {
+              "name": "北菓楼 小樽本館(夢不思議)",
+              "map": "北菓楼 小樽本館"
+            },
+            {
+              "name": "六花亭 小樽運河店",
+              "map": "六花亭 小樽運河店"
+            },
+            {
+              "name": "かま栄 本社工場(できたてパンロール)",
+              "map": "かま栄 本社工場"
+            },
+            {
+              "name": "小樽運河 散策",
+              "map": "小樽運河"
+            }
+          ],
+          "tags": [
+            "gourmet"
+          ]
+        },
+        {
+          "time": "15:30頃",
+          "title": "小樽散策 終了",
+          "note": "JR小樽駅へ",
+          "status": "confirmed"
+        },
+        {
+          "time": "16:00頃",
+          "title": "JR小樽駅 発",
+          "status": "confirmed",
+          "transit": {
+            "headline": "小樽 → 札幌方面",
+            "around": [
+              {
+                "time": "15:33",
+                "train": "エアポート136号",
+                "dest": "新千歳空港行(札幌経由)",
+                "arr": "16:08"
+              },
+              {
+                "time": "16:00",
+                "train": "エアポート140号",
+                "dest": "新千歳空港行(札幌経由)",
+                "arr": "16:33",
+                "self": true
+              },
+              {
+                "time": "16:11",
+                "train": "普通",
+                "dest": "岩見沢行",
+                "arr": "16:58"
+              }
+            ],
+            "note": "日中は毎時2〜3本。小樽→札幌の所要時間は快速で約33分。時刻は2026年8月時点の目安です。",
+            "link": "https://www.jrhokkaido.co.jp/airport/"
+          },
+          "tags": [
+            "transport"
+          ]
+        },
+        {
+          "time": "16:45頃",
+          "title": "JR札幌駅 着",
+          "status": "confirmed"
+        },
+        {
+          "time": "16:45-17:30",
+          "title": "ププリエ",
+          "note": "すすきの駅上・洋菓子店・★4.0",
+          "status": "confirmed",
+          "map": "ププリエ すすきの",
+          "tags": [
+            "gourmet"
+          ]
+        },
+        {
+          "time": "17:30-21:00",
+          "title": "すすきの・狸小路 ハシゴ酒",
+          "note": "2〜3軒",
+          "status": "candidates",
+          "options": [
+            {
+              "name": "狸COMICHI(狸小路5〜7丁目)",
+              "map": "狸COMICHI 札幌"
+            },
+            {
+              "name": "すすきの周辺の居酒屋",
+              "map": "すすきの 居酒屋"
+            }
+          ],
+          "tags": [
+            "gourmet"
+          ]
+        },
+        {
+          "time": "21:00-22:30",
+          "title": "夜パフェで締め",
+          "note": "札幌名物シメパフェ",
+          "status": "candidates",
+          "options": [
+            {
+              "name": "パフェ専門店 ななまがり",
+              "map": "パフェ専門店 ななまがり 札幌"
+            },
+            {
+              "name": "夜パフェ専門店 パフェテリア パル",
+              "map": "パフェテリア パル 札幌"
+            }
+          ],
+          "tags": [
+            "gourmet"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Day 3",
+      "date": "10/1(木)",
+      "theme": "札幌散策 → 回転寿司トリトン → 空港でお土産 → 帰路",
+      "items": [
+        {
+          "time": "8:30",
+          "title": "ホテルチェックアウト",
+          "note": "札幌駅のコインロッカーに荷物を預ける",
+          "status": "confirmed"
+        },
+        {
+          "time": "8:45-9:30",
+          "title": "Lemon Bakery",
+          "note": "朝カフェ・創成クロス1F・営業開始9:00",
+          "status": "confirmed",
+          "map": "Lemon Bakery 創成クロス 札幌",
+          "tags": [
+            "gourmet"
+          ]
+        },
+        {
+          "time": "9:30-10:15",
+          "title": "赤れんが庁舎周辺散策",
+          "status": "confirmed",
+          "map": "北海道庁旧本庁舎 赤れんが庁舎"
+        },
+        {
+          "time": "10:15-10:30",
+          "title": "タクシーでトリトンへ",
+          "note": "約5〜8分・800〜1,000円",
+          "status": "confirmed",
+          "tags": [
+            "transport"
+          ]
+        },
+        {
+          "time": "10:30",
+          "title": "回転寿司トリトン 北8条光星店 到着",
+          "note": "開店30分前に並び開始",
+          "status": "confirmed",
+          "map": "回転寿司トリトン 北8条光星店",
+          "tags": [
+            "gourmet"
+          ]
+        },
+        {
+          "time": "11:00-12:15",
+          "title": "トリトンでお寿司",
+          "status": "confirmed",
+          "highlight": true,
+          "tags": [
+            "gourmet"
+          ]
+        },
+        {
+          "time": "12:15-13:10",
+          "title": "徒歩で札幌駅へ",
+          "note": "荷物回収・駅周辺で買い物",
+          "status": "confirmed"
+        },
+        {
+          "time": "13:24",
+          "title": "JR札幌駅 発",
+          "note": "特別快速エアポート",
+          "status": "confirmed",
+          "tags": [
+            "transport"
+          ]
+        },
+        {
+          "time": "13:57",
+          "title": "新千歳空港 着",
+          "status": "confirmed"
+        },
+        {
+          "time": "14:00-15:30",
+          "title": "空港でお土産・限定スイーツ",
+          "status": "candidates",
+          "options": [
+            {
+              "name": "SNOW CHEESE(スノーホワイトチーズ)",
+              "map": "SNOW CHEESE 新千歳空港店"
+            },
+            {
+              "name": "ショコラティエマサール(ショコラブラウニー)",
+              "map": "ショコラティエマサール 新千歳空港"
+            },
+            {
+              "name": "札幌千秋庵(ノースマン)",
+              "map": "札幌千秋庵 新千歳空港"
+            }
+          ],
+          "tags": [
+            "omiyage"
+          ]
+        },
+        {
+          "time": "15:30",
+          "title": "保安検査場 通過",
+          "status": "confirmed"
+        },
+        {
+          "time": "16:10",
+          "title": "搭乗口へ",
+          "note": "搭乗開始",
+          "status": "confirmed"
+        },
+        {
+          "time": "16:30",
+          "title": "離陸",
+          "note": "JAL2839",
+          "status": "confirmed",
+          "highlight": true
+        }
+      ]
+    }
+  ]
+}
