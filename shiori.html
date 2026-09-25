@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>札幌・小樽 しおり(Web版) — グルメ・お土産・時刻表・地図</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<main id="app"><p class="loading">読み込み中…</p></main>
+
+<script>
+/* ============================================================
+   このページの役割:
+   紙のしおり(印刷版)に「だいたいの予定」は載っているので、
+   Web版はその補助として、当日の判断に使う情報 ── グルメ候補・
+   お土産候補・電車の時刻表・地図リンク ── だけをまとめてあります。
+   データは trip_data.json（印刷版と共通）。
+   ============================================================ */
+
+const STATUS_LABEL = { confirmed: "確定", tentative: "仮", candidates: "候補" };
+const STATE_KEY = 'athena-sapporo-otaru-state-v2';
+
+let TRIP = null;
+let STATE = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { /* ignore corrupt state */ }
+  return { checks: {}, expenses: {}, picks: {} };
+}
+function saveState() {
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(STATE)); } catch (e) { /* storage unavailable */ }
+}
+function mapUrl(query) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+function itemId(di, ii) { return `d${di}-i${ii}`; }
+
+function loadTripData(url, onSuccess, onError) {
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200 || xhr.status === 0) {
+          let parsed;
+          try { parsed = JSON.parse(xhr.responseText); }
+          catch (e) { onError(e); return; }
+          onSuccess(parsed);
+        } else {
+          onError(new Error('HTTP ' + xhr.status));
+        }
+      }
+    };
+    xhr.send();
+  } catch (e) {
+    onError(e);
+  }
+}
+
+loadTripData('./trip_data.json',
+  data => { TRIP = data; render(); },
+  err => {
+    console.error(err);
+    document.getElementById('app').innerHTML =
+      '<p class="loading">データの読み込みに失敗しました。ページを再読み込みしてください。<br>' +
+      '(trip_data.json が同じフォルダに必要です)</p>';
+  });
+
+/* ---------- helpers to pull cross-day lists out of TRIP ---------- */
+
+function collectGourmet() {
+  const out = [];
+  TRIP.days.forEach((day, di) => {
+    day.items.forEach((item, ii) => {
+      if ((item.tags || []).includes('gourmet')) out.push({ day, di, ii, item });
+    });
+  });
+  return out;
+}
+function collectOmiyage() {
+  const out = [];
+  TRIP.days.forEach((day, di) => {
+    day.items.forEach((item, ii) => {
+      if ((item.tags || []).includes('omiyage')) out.push({ day, di, ii, item });
+    });
+  });
+  return out;
+}
+function collectTransit() {
+  const out = [];
+  TRIP.days.forEach((day, di) => {
+    day.items.forEach((item, ii) => {
+      if (item.transit) out.push({ day, di, ii, item });
+    });
+  });
+  return out;
+}
+function collectMapEntries() {
+  const out = [];
+  TRIP.days.forEach((day, di) => {
+    day.items.forEach((item, ii) => {
+      if (item.map) out.push({ day, time: item.time, name: item.title, map: item.map, parent: null });
+      (item.options || []).forEach(opt => {
+        if (opt.map) out.push({ day, time: item.time, name: opt.name, map: opt.map, parent: item.title });
+      });
+    });
+  });
+  return out;
+}
+
+/* ---------- render ---------- */
+
+function render() {
+  const app = document.getElementById('app');
+  const header = `
+    <header class="hero">
+      <p class="hero-eyebrow">${TRIP.dateRange}・${TRIP.people}</p>
+      <h1>${TRIP.title}</h1>
+      <p class="hero-note">📄 大まかな予定は紙のしおりに記載しています。ここでは<strong>グルメ・お土産の候補、電車の時刻表、地図</strong>をまとめています。</p>
+      <div class="hero-facts">
+        ${TRIP.flights.map(f => `
+          <div class="fact">
+            <span class="fact-label">${f.date} ${f.no}</span>
+            <span class="fact-value">${f.route}　${f.dep} → ${f.arr}</span>
+          </div>`).join('')}
+        <div class="fact">
+          <span class="fact-label">宿泊</span>
+          <span class="fact-value">${TRIP.hotel.name}</span>
+        </div>
+        ${TRIP.weather ? `
+        <div class="fact">
+          <span class="fact-label">天気の目安</span>
+          <span class="fact-value">${TRIP.weather}</span>
+        </div>` : ''}
+      </div>
+      <div class="hero-total">
+        <span>グルメ実績合計</span>
+        <strong id="grand-total">¥0</strong>
+      </div>
+    </header>`;
+
+  const tabs = [
+    { id: 'gourmet', label: 'グルメ', icon: '🍽' },
+    { id: 'omiyage', label: 'お土産', icon: '🎁' },
+    { id: 'transit', label: '時刻表', icon: '🚃' },
+    { id: 'map', label: '地図', icon: '📍' },
+  ];
+  const nav = `
+    <nav class="tabnav" id="tabnav">
+      ${tabs.map((t, i) => `<button class="tabnav-btn${i === 0 ? ' active' : ''}" data-tab="${t.id}"><span class="tabnav-icon">${t.icon}</span>${t.label}</button>`).join('')}
+    </nav>`;
+
+  const panels = `
+    <div class="panels">
+      <section class="panel active" data-tab="gourmet">${renderGourmetPanel()}</section>
+      <section class="panel" data-tab="omiyage">${renderOmiyagePanel()}</section>
+      <section class="panel" data-tab="transit">${renderTransitPanelTab()}</section>
+      <section class="panel" data-tab="map">${renderMapPanel()}</section>
+    </div>`;
+
+  app.innerHTML = header + nav + panels;
+  attachHandlers();
+  updateTotals();
+}
+
+function dayChip(day) {
+  return `<span class="day-chip">${day.label}・${day.date}</span>`;
+}
+
+function renderGourmetPanel() {
+  const entries = collectGourmet();
+  const cards = entries.map(({ day, di, ii, item }) => {
+    const id = itemId(di, ii);
+    const checked = !!STATE.checks[id];
+    const expenseVal = STATE.expenses[id] || '';
+    const badge = item.status !== 'confirmed' ? `<span class="badge badge-${item.status}">${STATUS_LABEL[item.status]}</span>` : '';
+    const mapLink = item.map ? `<a class="map-link" href="${mapUrl(item.map)}" target="_blank" rel="noopener">📍 地図</a>` : '';
+    const note = item.note ? `<p class="card-note">${item.note}</p>` : '';
+    const options = item.options ? renderOptionPicker(item.options, id) : '';
+    return `
+      <li class="card${checked ? ' done' : ''}" data-id="${id}">
+        <div class="card-top">
+          ${dayChip(day)}
+          <span class="card-time">${item.time}</span>
+        </div>
+        <div class="card-title-row">
+          <label class="check-wrap"><input type="checkbox" class="check" data-id="${id}" ${checked ? 'checked' : ''}></label>
+          <h3>${item.title}</h3>
+          ${mapLink}
+          ${badge}
+        </div>
+        ${note}
+        ${options}
+        <div class="expense-row">
+          <span class="expense-label">実際の出費</span>
+          <span class="expense-yen">¥</span>
+          <input type="number" inputmode="numeric" class="expense-input" data-id="${id}" placeholder="0" min="0" step="100" value="${expenseVal}">
+        </div>
+      </li>`;
+  }).join('');
+  return `<ul class="card-list">${cards}</ul>`;
+}
+
+function renderOptionPicker(options, id) {
+  const pick = STATE.picks[id];
+  const rows = options.map((opt, oi) => {
+    const picked = pick === oi;
+    const mapLink = opt.map ? `<a class="map-link" href="${mapUrl(opt.map)}" target="_blank" rel="noopener">📍 地図</a>` : '';
+    return `
+      <li class="option-row${picked ? ' picked' : ''}">
+        <button type="button" class="pick-btn" data-id="${id}" data-oi="${oi}" aria-pressed="${picked}">
+          ${picked ? '✓ 選んだ' : '選ぶ'}
+        </button>
+        <span class="option-name">${opt.name}</span>
+        ${mapLink}
+      </li>`;
+  }).join('');
+  return `<ul class="options">${rows}</ul>`;
+}
+
+function renderOmiyagePanel() {
+  const entries = collectOmiyage();
+  if (!entries.length) return `<p class="empty">お土産の候補はまだありません。</p>`;
+  const cards = entries.map(({ day, di, ii, item }) => {
+    const id = itemId(di, ii);
+    const note = item.note ? `<p class="card-note">${item.note}</p>` : '';
+    const options = item.options ? renderOptionPicker(item.options, id) : '';
+    return `
+      <li class="card" data-id="${id}">
+        <div class="card-top">${dayChip(day)}<span class="card-time">${item.time}</span></div>
+        <div class="card-title-row"><h3>${item.title}</h3></div>
+        ${note}
+        ${options}
+      </li>`;
+  }).join('');
+  return `<ul class="card-list">${cards}</ul>`;
+}
+
+function renderTransitPanelTab() {
+  const entries = collectTransit();
+  if (!entries.length) return `<p class="empty">時刻表情報はまだありません。</p>`;
+  const cards = entries.map(({ day, item }) => {
+    const t = item.transit;
+    const rows = (t.around || []).map(r => `
+      <div class="transit-row${r.self ? ' self' : ''}">
+        <span class="transit-row-time">${r.time}</span>
+        <span class="transit-row-train">${r.train}${r.dest ? '　' + r.dest : ''}</span>
+        ${r.arr ? `<span class="transit-row-arr">${r.arr}着</span>` : ''}
+      </div>`).join('');
+    return `
+      <li class="card transit-card">
+        <div class="card-top">${dayChip(day)}<span class="card-time">${item.time} ${item.title}</span></div>
+        <p class="transit-headline">${t.headline}</p>
+        ${rows ? `<div class="transit-rows">${rows}</div>` : ''}
+        <p class="transit-note">${t.note}</p>
+        ${t.link ? `<a class="transit-link" href="${t.link}" target="_blank" rel="noopener">公式サイトで最新の時刻を確認する →</a>` : ''}
+      </li>`;
+  }).join('');
+  return `<ul class="card-list">${cards}</ul>`;
+}
+
+function renderMapPanel() {
+  const entries = collectMapEntries();
+  if (!entries.length) return `<p class="empty">地図リンクはまだありません。</p>`;
+  const rows = entries.map(e => `
+    <li class="map-row">
+      <div class="map-row-main">
+        <div class="map-row-top">${dayChip(e.day)}<span class="card-time">${e.time}</span></div>
+        <span class="map-row-name">${e.name}</span>
+        ${e.parent ? `<span class="map-row-parent">${e.parent} の候補</span>` : ''}
+      </div>
+      <a class="map-link map-link-btn" href="${mapUrl(e.map)}" target="_blank" rel="noopener">📍 地図で開く</a>
+    </li>`).join('');
+  return `<ul class="map-list">${rows}</ul>`;
+}
+
+/* ---------- interactivity ---------- */
+
+function attachHandlers() {
+  document.querySelectorAll('.tabnav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('.tabnav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelector(`.panel[data-tab="${tab}"]`).classList.add('active');
+      try { history.replaceState(null, '', `#${tab}`); } catch (e) { /* sandboxed preview */ }
+    });
+  });
+
+  document.querySelectorAll('.check').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const id = cb.dataset.id;
+      STATE.checks[id] = cb.checked;
+      saveState();
+      cb.closest('.card').classList.toggle('done', cb.checked);
+    });
+  });
+
+  document.querySelectorAll('.expense-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const id = inp.dataset.id;
+      const val = inp.value === '' ? null : Number(inp.value);
+      if (val === null || isNaN(val)) delete STATE.expenses[id];
+      else STATE.expenses[id] = val;
+      saveState();
+      updateTotals();
+    });
+  });
+
+  document.querySelectorAll('.pick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const oi = Number(btn.dataset.oi);
+      STATE.picks[id] = STATE.picks[id] === oi ? undefined : oi;
+      saveState();
+      render();
+      const hash = location.hash.replace('#', '');
+      if (hash) {
+        const tabBtn = document.querySelector(`.tabnav-btn[data-tab="${hash}"]`);
+        if (tabBtn) tabBtn.click();
+      }
+    });
+  });
+
+  const hash = location.hash.replace('#', '');
+  if (hash) {
+    const tabBtn = document.querySelector(`.tabnav-btn[data-tab="${hash}"]`);
+    if (tabBtn) tabBtn.click();
+  }
+}
+
+function updateTotals() {
+  let total = 0;
+  Object.values(STATE.expenses).forEach(v => { if (typeof v === 'number' && !isNaN(v)) total += v; });
+  const el = document.getElementById('grand-total');
+  if (el) el.textContent = `¥${total.toLocaleString()}`;
+}
+</script>
+
+<style>
+:root {
+  --ink: #22262E;
+  --ink-soft: #565C66;
+  --paper: #FAF8F3;
+  --panel: #FFFFFF;
+  --navy: #1F3350;
+  --navy-deep: #142338;
+  --amber: #C6852F;
+  --amber-soft: #F3E3C8;
+  --teal: #2E6B63;
+  --teal-soft: #DCEAE7;
+  --line: #E2DDD1;
+  --radius: 12px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Zen Kaku Gothic New", sans-serif;
+  line-height: 1.7;
+}
+.loading { padding: 40px 24px; color: var(--ink-soft); font-size: 14px; }
+h1, h3 {
+  font-family: "Shippori Mincho", serif;
+  font-weight: 700;
+  margin: 0;
+  color: var(--navy-deep);
+}
+.hero {
+  background: var(--navy-deep);
+  color: #F2EFE6;
+  padding: 32px 20px 26px;
+}
+.hero-eyebrow { margin: 0 0 8px; font-size: 12px; color: #C9B98C; }
+.hero h1 { color: #FAF8F3; font-size: 24px; line-height: 1.4; margin-bottom: 10px; }
+.hero-note {
+  font-size: 12.5px;
+  color: #D9D4C4;
+  background: rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 0 0 16px;
+}
+.hero-note strong { color: var(--amber); font-weight: 500; }
+.hero-facts { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 14px; }
+.fact { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 13px; }
+.fact-label { color: var(--amber); font-weight: 500; min-width: 88px; }
+.fact-value { color: #EDE9DC; }
+.hero-total {
+  margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.15);
+  display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: #C9B98C;
+}
+.hero-total strong { color: #FAF8F3; font-size: 17px; font-family: "Shippori Mincho", serif; }
+
+.tabnav {
+  display: flex;
+  position: sticky; top: 0; z-index: 10;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+.tabnav-btn {
+  flex: 1; border: none; background: none;
+  font-family: "Zen Kaku Gothic New", sans-serif; font-size: 13px; font-weight: 500;
+  color: var(--ink-soft); padding: 12px 4px 10px; cursor: pointer;
+  border-bottom: 3px solid transparent;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.tabnav-icon { font-size: 17px; }
+.tabnav-btn.active { color: var(--navy-deep); border-bottom-color: var(--amber); }
+
+.panels { max-width: 640px; margin: 0 auto; padding: 16px 16px 60px; }
+.panel { display: none; }
+.panel.active { display: block; }
+.empty { color: var(--ink-soft); font-size: 14px; padding: 24px 4px; }
+
+.card-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.card.done { opacity: 0.55; }
+.card.done h3 { text-decoration: line-through; }
+.card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.day-chip { font-size: 11px; color: var(--ink-soft); background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 2px 9px; }
+.card-time { font-size: 12px; color: var(--ink-soft); }
+.card-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.card-title-row h3 { font-size: 16px; }
+.card-note { margin: 4px 0 0; font-size: 13px; color: var(--ink-soft); }
+.check-wrap { display: inline-flex; }
+.check { width: 17px; height: 17px; accent-color: var(--navy); cursor: pointer; }
+
+.map-link { font-size: 12px; color: var(--teal); text-decoration: none; font-weight: 500; white-space: nowrap; }
+.map-link:hover { text-decoration: underline; }
+
+.badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+.badge-tentative { background: var(--amber-soft); color: var(--amber); border: 1px solid var(--amber); }
+.badge-candidates { background: var(--teal-soft); color: var(--teal); border: 1px solid var(--teal); }
+
+.options { list-style: none; margin: 10px 0 0; padding: 10px; background: var(--paper); border-radius: 10px; display: flex; flex-direction: column; gap: 8px; }
+.option-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.option-row.picked { color: var(--navy); }
+.option-name { flex: 1; }
+.pick-btn {
+  font-family: "Zen Kaku Gothic New", sans-serif; font-size: 11.5px; font-weight: 500;
+  border: 1px solid var(--navy); background: var(--panel); color: var(--navy);
+  border-radius: 20px; padding: 3px 10px; cursor: pointer; white-space: nowrap;
+}
+.option-row.picked .pick-btn { background: var(--navy); color: #fff; }
+
+.expense-row { margin-top: 10px; display: inline-flex; align-items: center; gap: 4px; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 4px 10px; }
+.expense-label { font-size: 11px; color: var(--ink-soft); margin-right: 4px; }
+.expense-yen { font-size: 13px; color: var(--ink-soft); }
+.expense-input { width: 70px; border: none; background: none; font-family: "Zen Kaku Gothic New", sans-serif; font-size: 13px; color: var(--ink); outline: none; }
+
+.transit-card { background: var(--navy-deep); color: #EDE9DC; }
+.transit-card .card-top .day-chip { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); color: #D9D4C4; }
+.transit-card .card-top .card-time { color: #D9D4C4; font-weight: 500; }
+.transit-headline { margin: 6px 0 8px; font-size: 13px; font-weight: 500; color: var(--amber); }
+.transit-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.transit-row { display: flex; align-items: baseline; gap: 8px; font-size: 13px; padding: 5px 8px; border-radius: 6px; }
+.transit-row.self { background: rgba(198,133,47,0.22); }
+.transit-row-time { font-weight: 500; min-width: 42px; }
+.transit-row-train { flex: 1; color: #D9D4C4; }
+.transit-row-arr { color: #B9B3A2; font-size: 12px; white-space: nowrap; }
+.transit-note { margin: 0 0 8px; font-size: 12px; color: #B9B3A2; line-height: 1.6; }
+.transit-link { color: var(--amber); font-size: 13px; font-weight: 500; text-decoration: none; }
+.transit-link:hover { text-decoration: underline; }
+
+.map-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.map-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
+.map-row-top { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+.map-row-name { font-size: 14.5px; font-weight: 500; color: var(--ink); display: block; }
+.map-row-parent { font-size: 11.5px; color: var(--ink-soft); }
+.map-link-btn { border: 1px solid var(--teal); border-radius: 20px; padding: 5px 12px; white-space: nowrap; }
+
+@media (min-width: 700px) {
+  .hero { padding: 44px 40px 36px; }
+  .hero h1 { font-size: 30px; }
+}
+</style>
+</body>
+</html>
